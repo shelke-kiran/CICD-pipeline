@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Interactive visual CI/CD pipeline dashboard showcasing continuous integration and automated deployments.">
+  <title>CI/CD Automation Dashboard | Kiran Shelke</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: rgba(17, 24, 39, 0.7);
+      --primary: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --text-main: #f3f4f6;
+      --text-sub: #9ca3af;
+      --glow-blue: rgba(59, 130, 246, 0.4);
+      --glow-green: rgba(16, 185, 129, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: radial-gradient(circle at 50% 0%, #1e293b 0%, var(--bg-dark) 70%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      padding: 2.5rem 2rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(9, 13, 22, 0.5);
+      backdrop-filter: blur(12px);
+    }
+
+    .title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--text-sub);
+      font-weight: 300;
+    }
+
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+    }
+
+    /* Pipeline Visualization Container */
+    .pipeline-container {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 3rem 2rem;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      gap: 2rem;
+    }
+
+    .pipeline-step {
+      flex: 1;
+      min-width: 200px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .pipeline-step::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 16px;
+      padding: 1.5px;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.3));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.5;
+    }
+
+    .pipeline-step:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 24px var(--glow-blue);
+      border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    .pipeline-step.success:hover {
+      box-shadow: 0 12px 24px var(--glow-green);
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+
+    .step-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+    }
+
+    .step-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+
+    .step-status {
+      display: inline-block;
+      font-size: 0.8rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--primary);
+    }
+
+    .pipeline-step.success .step-status {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+    }
+
+    /* Info Panel */
+    .info-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #fff;
+    }
+
+    .card-title span {
+      color: var(--primary);
+    }
+
+    .workflow-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      background: #05070c;
+      padding: 1rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: #a7f3d0;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    ul {
+      list-style-position: inside;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      color: var(--text-sub);
+    }
+
+    li strong {
+      color: var(--text-main);
+    }
+
+    footer {
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-sub);
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      margin-top: auto;
+      background: rgba(9, 13, 22, 0.8);
+    }
+
+    .glow-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--success);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 10px var(--success);
+      animation: pulse 1.8s infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.6; }
+      50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 15px var(--success); }
+      100% { transform: scale(0.9); opacity: 0.6; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 id="main-header" class="title">CI/CD Production Pipelines</h1>
+    <p class="subtitle">Designed & Automated by Kiran Shelke (shelke-kiran)</p>
+  </header>
+
+  <main>
+    <section>
+      <div class="pipeline-container">
+        
+        <div id="step-commit" class="pipeline-step success">
+          <span class="step-icon">💻</span>
+          <h2 class="step-title">1. Code Commit</h2>
+          <span class="step-status"><span class="glow-dot"></span>Triggered</span>
+        </div>
+
+        <div id="step-lint" class="pipeline-step success">
+          <span class="step-icon">✨</span>
+          <h2 class="step-title">2. Lint & Validate</h2>
+          <span class="step-status">Passing</span>
+        </div>
+
+        <div id="step-test" class="pipeline-step success">
+          <span class="step-icon">🧪</span>
+          <h2 class="step-title">3. Automated Test</h2>
+          <span class="step-status">100% Passed</span>
+        </div>
+
+        <div id="step-build" class="pipeline-step success">
+          <span class="step-icon">📦</span>
+          <h2 class="step-title">4. Build Artifacts</h2>
+          <span class="step-status">Success</span>
+        </div>
+
+        <div id="step-deploy" class="pipeline-step success">
+          <span class="step-icon">🚀</span>
+          <h2 class="step-title">5. Production CD</h2>
+          <span class="step-status">Live</span>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="info-panel">
+      <div class="card">
+        <h3 class="card-title"><span>⚙️</span> Pipeline Architecture</h3>
+        <ul>
+          <li><strong>GitHub Actions Engine:</strong> Automatically executes linting, unit testing, and artifact compilations on every git push event.</li>
+          <li><strong>Zero-Downtime CD:</strong> Deployments are fully sandboxed and validated prior to pushing updates to the live production server.</li>
+          <li><strong>Dependency Caching:</strong> Node modules are securely cached between runner executions, speeding up run times by over 60%.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title"><span>📄</span> Typical workflow.yml</h3>
+        <div class="workflow-code">name: Production Deployment
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Dashboard
+        run: npm run build
+      - name: Deploy to Server
+        run: npm run deploy</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Kiran Shelke. Engineered with GitHub Actions and Professional CI/CD Workflows.</p>
+  </footer>
+
+</body>
+</html>
